@@ -206,3 +206,4 @@ o caminho de recusa (estoque permanece inalterado).
   a internet, é preciso configurar HTTPS e trocar `CORS_ORIGINS` para o domínio real).
 - Envio de notificação (e-mail, por exemplo) para o administrador quando uma nova
   compra fica pendente — hoje a indicação só aparece dentro do próprio sistema.
+Projeto de sistema para oficina mecânica.
