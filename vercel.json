@@ -1,10 +1,18 @@
 {
   "services": {
     "frontend": {
-      "rootDirectory": "frontend"
+      "root": "frontend/"
     },
     "backend": {
-      "rootDirectory": "backend"
+      "root": "backend/"
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": {
+        "service": "frontend"
+      }
+    }
+  ]
 }
