@@ -52,18 +52,23 @@ export const api = {
   listarProdutos: (busca) => request(`/api/produtos${busca ? `?busca=${encodeURIComponent(busca)}` : ''}`),
   criarProduto: (dados) => request('/api/produtos', { method: 'POST', body: dados }),
   excluirProduto: (id) => request(`/api/produtos/${id}`, { method: 'DELETE', autenticado: true }),
+  darBaixaEstoque: (produtoId, quantidade) =>
+    request(`/api/produtos/${produtoId}/baixa`, { method: 'PATCH', body: { quantidade } }),
   listarResponsaveis: () => request('/api/responsaveis'),
   listarFerramentas: () => request('/api/ferramentas'),
   criarFerramenta: (dados) => request('/api/ferramentas', { method: 'POST', body: dados }),
   atualizarFerramenta: (id, dados) => request(`/api/ferramentas/${id}`, { method: 'PUT', body: dados }),
   excluirFerramenta: (id) => request(`/api/ferramentas/${id}`, { method: 'DELETE' }),
   registrarCompra: (dados) => request('/api/compras', { method: 'POST', body: dados }),
+  minhasSolicitacoes: (nome) =>
+    request(`/api/compras/minhas?responsavel_nome=${encodeURIComponent(nome)}`),
 
   // ---- admin ----
   login: (senha) => request('/api/admin/login', { method: 'POST', body: { senha } }),
   pendentes: () => request('/api/compras/pendentes', { autenticado: true }),
   detalheCompra: (id) => request(`/api/compras/${id}`, { autenticado: true }),
-  aprovarCompra: (id) => request(`/api/compras/${id}/aprovar`, { method: 'POST', autenticado: true }),
+  aprovarCompra: (id, justificativa) =>
+    request(`/api/compras/${id}/aprovar`, { method: 'POST', body: { justificativa }, autenticado: true }),
   recusarCompra: (id, motivo) =>
     request(`/api/compras/${id}/recusar`, { method: 'POST', body: { motivo }, autenticado: true }),
   historicoCompras: (filtros = {}) => {

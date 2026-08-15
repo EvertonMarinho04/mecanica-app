@@ -11,8 +11,8 @@ export default function AdminCompraDetalhe() {
   const [compra, setCompra] = useState(null)
   const [erro, setErro] = useState('')
   const [processando, setProcessando] = useState(false)
-  const [mostrarRecusa, setMostrarRecusa] = useState(false)
-  const [motivo, setMotivo] = useState('')
+  const [acao, setAcao] = useState(null) // null | 'aprovar' | 'recusar'
+  const [textoJustificativa, setTextoJustificativa] = useState('')
 
   function carregar() {
     api.detalheCompra(id).then(setCompra).catch((e) => setErro(e.message))
@@ -20,23 +20,20 @@ export default function AdminCompraDetalhe() {
 
   useEffect(carregar, [id])
 
-  async function aprovar() {
-    setProcessando(true)
-    setErro('')
-    try {
-      await api.aprovarCompra(id)
-      navegar('/admin/pendentes')
-    } catch (e) {
-      setErro(e.message)
-      setProcessando(false)
-    }
+  function abrirAcao(tipo) {
+    setAcao(tipo)
+    setTextoJustificativa('')
   }
 
-  async function recusar() {
+  async function confirmarAcao() {
     setProcessando(true)
     setErro('')
     try {
-      await api.recusarCompra(id, motivo)
+      if (acao === 'aprovar') {
+        await api.aprovarCompra(id, textoJustificativa.trim() || null)
+      } else {
+        await api.recusarCompra(id, textoJustificativa.trim() || null)
+      }
       navegar('/admin/pendentes')
     } catch (e) {
       setErro(e.message)
@@ -85,39 +82,60 @@ export default function AdminCompraDetalhe() {
           <Linha rotulo="Data do registro" valor={formatarDataHora(compra.data_registro)} />
           <Linha rotulo="Estoque atual do produto" valor={`${compra.estoque_atual_produto} ${compra.produto.unidade}`} />
           {compra.observacao && <Linha rotulo="Observação" valor={compra.observacao} />}
-          {compra.motivo_recusa && <Linha rotulo="Motivo da recusa" valor={compra.motivo_recusa} />}
+          {compra.status !== 'pendente' && (
+            <Linha
+              rotulo={compra.status === 'aprovada' ? 'Justificativa da aprovação' : 'Motivo da recusa'}
+              valor={compra.justificativa || 'Nenhuma justificativa foi informada.'}
+            />
+          )}
         </dl>
       </div>
 
       {compra.status === 'pendente' && (
         <div className="cartao">
-          {!mostrarRecusa ? (
+          {!acao ? (
             <div style={{ display: 'flex', gap: 10 }}>
-              <button className="botao botao-sucesso" style={{ flex: 1 }} disabled={processando} onClick={aprovar}>
+              <button className="botao botao-sucesso" style={{ flex: 1 }} disabled={processando} onClick={() => abrirAcao('aprovar')}>
                 ✅ Aprovar
               </button>
-              <button className="botao botao-erro" style={{ flex: 1 }} disabled={processando} onClick={() => setMostrarRecusa(true)}>
+              <button className="botao botao-erro" style={{ flex: 1 }} disabled={processando} onClick={() => abrirAcao('recusar')}>
                 ❌ Recusar
               </button>
             </div>
           ) : (
             <div>
               <div className="campo">
-                <label>Motivo da recusa <span className="ajuda">(opcional)</span></label>
+                <label>
+                  {acao === 'aprovar' ? 'Justificativa da aprovação' : 'Motivo da recusa'}{' '}
+                  <span className="ajuda">(opcional)</span>
+                </label>
                 <textarea
                   rows={2}
-                  placeholder="Ex.: Já temos quantidade suficiente em estoque."
-                  value={motivo}
-                  onChange={(e) => setMotivo(e.target.value)}
+                  placeholder={
+                    acao === 'aprovar'
+                      ? 'Ex.: Compra autorizada.'
+                      : 'Ex.: Já temos quantidade suficiente em estoque.'
+                  }
+                  value={textoJustificativa}
+                  onChange={(e) => setTextoJustificativa(e.target.value)}
                   autoFocus
                 />
               </div>
               <div style={{ display: 'flex', gap: 10 }}>
-                <button className="botao botao-secundario" style={{ flex: 1 }} onClick={() => setMostrarRecusa(false)} disabled={processando}>
+                <button className="botao botao-secundario" style={{ flex: 1 }} onClick={() => setAcao(null)} disabled={processando}>
                   Cancelar
                 </button>
-                <button className="botao botao-erro" style={{ flex: 1 }} onClick={recusar} disabled={processando}>
-                  {processando ? 'Recusando...' : 'Confirmar recusa'}
+                <button
+                  className={`botao ${acao === 'aprovar' ? 'botao-sucesso' : 'botao-erro'}`}
+                  style={{ flex: 1 }}
+                  onClick={confirmarAcao}
+                  disabled={processando}
+                >
+                  {processando
+                    ? 'Salvando...'
+                    : acao === 'aprovar'
+                    ? 'Confirmar aprovação'
+                    : 'Confirmar recusa'}
                 </button>
               </div>
             </div>

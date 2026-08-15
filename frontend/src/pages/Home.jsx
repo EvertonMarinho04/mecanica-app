@@ -5,6 +5,7 @@ const OPCOES = [
   { to: '/estoque', icone: '📦', titulo: 'Estoque', descricao: 'Veja a quantidade disponível de cada produto.' },
   { to: '/cadastrar-peca', icone: '➕', titulo: 'Cadastrar peça', descricao: 'Adicione um novo produto ao sistema.' },
   { to: '/ferramentas', icone: '🔧', titulo: 'Ferramentas', descricao: 'Consulte e atualize as ferramentas da oficina.' },
+  { to: '/minhas-solicitacoes', icone: '📋', titulo: 'Minhas solicitações', descricao: 'Veja o status das compras que você pediu.' },
 ]
 
 export default function Home() {

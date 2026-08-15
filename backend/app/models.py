@@ -87,6 +87,7 @@ class Compra(Base):
 
     status = Column(Enum(StatusCompra), default=StatusCompra.PENDENTE, nullable=False)
     motivo_recusa = Column(Text, nullable=True)
+    justificativa_aprovacao = Column(Text, nullable=True)
 
     data_registro = Column(DateTime, default=datetime.utcnow)
     data_decisao = Column(DateTime, nullable=True)

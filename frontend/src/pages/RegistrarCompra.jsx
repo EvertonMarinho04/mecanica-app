@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { formatarMoeda } from '../format'
+import { obterMeuNome, salvarMeuNome } from '../meuNome'
 
 export default function RegistrarCompra() {
   const navegar = useNavigate()
@@ -13,7 +14,7 @@ export default function RegistrarCompra() {
     preco_unitario: '',
     fornecedor: '',
     numero_nf: '',
-    responsavel_nome: '',
+    responsavel_nome: obterMeuNome(),
     observacao: '',
   })
   const [enviando, setEnviando] = useState(false)
@@ -58,7 +59,8 @@ export default function RegistrarCompra() {
         observacao: form.observacao.trim() || null,
       })
       setSucesso(compra)
-      setForm({ produto_nome: '', quantidade: '', preco_unitario: '', fornecedor: '', numero_nf: '', responsavel_nome: '', observacao: '' })
+      salvarMeuNome(form.responsavel_nome.trim())
+      setForm({ produto_nome: '', quantidade: '', preco_unitario: '', fornecedor: '', numero_nf: '', responsavel_nome: form.responsavel_nome, observacao: '' })
       api.listarResponsaveis().then(setResponsaveis).catch(() => {})
     } catch (e) {
       setErro(e.message)

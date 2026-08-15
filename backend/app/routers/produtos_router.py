@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional, List
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -82,3 +83,42 @@ def excluir_produto(produto_id: int, db: Session = Depends(get_db)):
 
     db.delete(produto)
     db.commit()
+
+
+# ---------- Dar baixa no estoque (funcionario, sem login) ----------
+@router.patch("/produtos/{produto_id}/baixa", response_model=schemas.ProdutoOut)
+def dar_baixa_estoque(produto_id: int, dados: schemas.BaixaEstoqueRequest, db: Session = Depends(get_db)):
+    """Reduz a quantidade em estoque de um produto quando um funcionario usa
+    o material. Reutiliza a mesma tabela de movimentacoes de estoque que ja
+    e usada quando uma compra e aprovada (MovimentacaoEstoque), so que aqui
+    com tipo "saida" e quantidade negativa, em vez de criar uma logica
+    separada para isso."""
+    produto = db.query(models.Produto).get(produto_id)
+    if not produto:
+        raise HTTPException(status_code=404, detail="Produto nao encontrado.")
+
+    if dados.quantidade <= 0:
+        raise HTTPException(status_code=400, detail="A quantidade utilizada deve ser maior que zero.")
+
+    if dados.quantidade > produto.quantidade_atual:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Quantidade maior do que o estoque disponivel "
+                f"({produto.quantidade_atual} {produto.unidade})."
+            ),
+        )
+
+    produto.quantidade_atual = produto.quantidade_atual - dados.quantidade
+
+    movimentacao = models.MovimentacaoEstoque(
+        produto_id=produto.id,
+        compra_id=None,
+        quantidade=-dados.quantidade,
+        tipo="saida",
+        data=datetime.utcnow(),
+    )
+    db.add(movimentacao)
+    db.commit()
+    db.refresh(produto)
+    return produto_para_out(produto)

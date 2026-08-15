@@ -13,6 +13,13 @@ router = APIRouter(prefix="/api/compras", tags=["compras"])
 
 
 def _compra_para_out(compra: models.Compra) -> dict:
+    if compra.status == StatusCompra.APROVADA:
+        justificativa = compra.justificativa_aprovacao
+    elif compra.status == StatusCompra.RECUSADA:
+        justificativa = compra.motivo_recusa
+    else:
+        justificativa = None
+
     return {
         "id": compra.id,
         "quantidade": compra.quantidade,
@@ -23,6 +30,7 @@ def _compra_para_out(compra: models.Compra) -> dict:
         "observacao": compra.observacao,
         "status": compra.status,
         "motivo_recusa": compra.motivo_recusa,
+        "justificativa": justificativa,
         "data_registro": compra.data_registro,
         "data_decisao": compra.data_decisao,
         "produto": produto_para_out(compra.produto),
@@ -105,6 +113,30 @@ def listar_pendentes(db: Session = Depends(get_db)):
     return [_compra_para_out(c) for c in compras]
 
 
+# ---------- Minhas solicitacoes (funcionario, sem login) ----------
+# Este sistema nao tem autenticacao individual para funcionarios (por
+# desenho, para manter simples - o funcionario so digita o proprio nome ao
+# registrar uma compra). Por isso, aqui usamos esse mesmo nome como forma de
+# identificacao: o funcionario informa seu nome e ve so as solicitacoes
+# registradas com esse nome exato. Nao e uma autenticacao com senha - e a
+# mesma logica de identidade que ja existia no resto do sistema.
+@router.get("/minhas", response_model=List[schemas.CompraOut])
+def minhas_solicitacoes(responsavel_nome: str, db: Session = Depends(get_db)):
+    nome = responsavel_nome.strip()
+    if not nome:
+        raise HTTPException(status_code=400, detail="Informe seu nome para ver suas solicitacoes.")
+
+    compras = (
+        db.query(models.Compra)
+        .join(models.Responsavel)
+        .options(joinedload(models.Compra.produto).joinedload(models.Produto.categoria), joinedload(models.Compra.responsavel))
+        .filter(models.Responsavel.nome.ilike(nome))
+        .order_by(models.Compra.data_registro.desc())
+        .all()
+    )
+    return [_compra_para_out(c) for c in compras]
+
+
 @router.get("/{compra_id}", response_model=schemas.CompraDetalheOut, dependencies=[Depends(auth.exigir_admin)])
 def detalhe_compra(compra_id: int, db: Session = Depends(get_db)):
     compra = db.query(models.Compra).get(compra_id)
@@ -120,7 +152,7 @@ def detalhe_compra(compra_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/{compra_id}/aprovar", response_model=schemas.CompraOut, dependencies=[Depends(auth.exigir_admin)])
-def aprovar_compra(compra_id: int, db: Session = Depends(get_db)):
+def aprovar_compra(compra_id: int, dados: schemas.AprovacaoRequest = schemas.AprovacaoRequest(), db: Session = Depends(get_db)):
     compra = db.query(models.Compra).get(compra_id)
     if not compra:
         raise HTTPException(status_code=404, detail="Compra nao encontrada.")
@@ -129,6 +161,7 @@ def aprovar_compra(compra_id: int, db: Session = Depends(get_db)):
 
     compra.status = StatusCompra.APROVADA
     compra.data_decisao = datetime.utcnow()
+    compra.justificativa_aprovacao = (dados.justificativa or "").strip() or None
 
     produto = compra.produto
     produto.quantidade_atual = (produto.quantidade_atual or 0) + compra.quantidade

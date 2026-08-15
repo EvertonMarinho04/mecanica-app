@@ -94,6 +94,7 @@ class CompraOut(BaseModel):
     observacao: Optional[str] = None
     status: StatusCompra
     motivo_recusa: Optional[str] = None
+    justificativa: Optional[str] = None
     data_registro: datetime
     data_decisao: Optional[datetime] = None
     produto: ProdutoOut
@@ -108,6 +109,15 @@ class CompraDetalheOut(CompraOut):
 
 class RecusaRequest(BaseModel):
     motivo: Optional[str] = None
+
+
+class AprovacaoRequest(BaseModel):
+    justificativa: Optional[str] = None
+
+
+# ---------- Estoque ----------
+class BaixaEstoqueRequest(BaseModel):
+    quantidade: float
 
 
 # ---------- Admin auth ----------

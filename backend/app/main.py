@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
-from .database import Base, engine, SessionLocal
+from .database import Base, engine, SessionLocal, aplicar_migracoes_leves
 from . import models
 from .routers import (
     auth_router,
@@ -18,6 +18,7 @@ from .routers import (
 load_dotenv()
 
 Base.metadata.create_all(bind=engine)
+aplicar_migracoes_leves()
 
 app = FastAPI(title="Controle de Compras e Estoque - Mecanica")
 

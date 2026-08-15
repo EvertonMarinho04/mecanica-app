@@ -7,6 +7,7 @@ import Estoque from './pages/Estoque'
 import CadastrarPeca from './pages/CadastrarPeca'
 import RegistrarCompra from './pages/RegistrarCompra'
 import Ferramentas from './pages/Ferramentas'
+import MinhasSolicitacoes from './pages/MinhasSolicitacoes'
 
 import AdminLogin from './pages/AdminLogin'
 import AdminLayout from './pages/AdminLayout'
@@ -27,6 +28,7 @@ export default function App() {
             <Route path="/cadastrar-peca" element={<CadastrarPeca />} />
             <Route path="/registrar-compra" element={<RegistrarCompra />} />
             <Route path="/ferramentas" element={<Ferramentas />} />
+            <Route path="/minhas-solicitacoes" element={<MinhasSolicitacoes />} />
           </Route>
 
           <Route path="/admin/login" element={<AdminLogin />} />
