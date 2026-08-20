@@ -40,9 +40,19 @@ def aplicar_migracoes_leves():
 
     colunas_novas = {
         "justificativa_aprovacao": "TEXT",
+        "quantidade_aprovada": "FLOAT",
+        "quantidade_recebida": "FLOAT DEFAULT 0",
     }
 
     with engine.begin() as conn:
         for nome_coluna, tipo_sql in colunas_novas.items():
             if nome_coluna not in colunas_existentes:
                 conn.execute(text(f"ALTER TABLE compras ADD COLUMN {nome_coluna} {tipo_sql}"))
+        if "quantidade_recebida" not in colunas_existentes:
+            conn.execute(text("UPDATE compras SET quantidade_recebida = 0 WHERE quantidade_recebida IS NULL"))
+
+    if "ferramentas" in inspector.get_table_names():
+        colunas_ferramentas = {c["name"] for c in inspector.get_columns("ferramentas")}
+        if "marca" not in colunas_ferramentas:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE ferramentas ADD COLUMN marca VARCHAR"))

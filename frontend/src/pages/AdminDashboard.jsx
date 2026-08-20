@@ -11,6 +11,7 @@ export default function AdminDashboard() {
   const [gastosCategoria, setGastosCategoria] = useState(null)
   const [maioresAumentos, setMaioresAumentos] = useState(null)
   const [maisComprados, setMaisComprados] = useState(null)
+  const [produtosEstoqueBaixo, setProdutosEstoqueBaixo] = useState(null)
   const [erro, setErro] = useState('')
 
   useEffect(() => {
@@ -20,6 +21,7 @@ export default function AdminDashboard() {
       api.gastosPorCategoria().then(setGastosCategoria),
       api.maioresAumentos().then(setMaioresAumentos),
       api.maisComprados().then(setMaisComprados),
+      api.listarProdutos().then((produtos) => setProdutosEstoqueBaixo(produtos.filter((p) => p.estoque_baixo))),
     ]).catch((e) => setErro(e.message))
   }, [])
 
@@ -128,6 +130,24 @@ export default function AdminDashboard() {
                 </ul>
               ) : (
                 <p className="subtitulo">Nenhuma compra aprovada neste mês ainda.</p>
+              )}
+            </div>
+
+            <div className="cartao">
+              <h3 style={{ fontSize: '1rem', marginBottom: 14 }}>⚠️ Estoque baixo</h3>
+              {produtosEstoqueBaixo && produtosEstoqueBaixo.length > 0 ? (
+                <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {produtosEstoqueBaixo.map((p) => (
+                    <li key={p.id} style={estilos.linhaCategoria}>
+                      <span>{p.nome}</span>
+                      <span className="dado" style={{ color: 'var(--cor-erro)' }}>
+                        Atual: {p.quantidade_atual} · Mínimo: {p.estoque_minimo}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="subtitulo">Nenhum produto abaixo do estoque mínimo. 🎉</p>
               )}
             </div>
           </div>

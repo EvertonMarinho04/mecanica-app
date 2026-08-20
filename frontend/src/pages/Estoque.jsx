@@ -3,6 +3,7 @@ import { api } from '../api'
 import { Carregando, EstadoVazio } from '../components/Estados'
 import ModalConfirmacao from '../components/ModalConfirmacao'
 import ModalBaixaEstoque from '../components/ModalBaixaEstoque'
+import ModalEditarProduto from '../components/ModalEditarProduto'
 import { useAdmin } from '../context/AdminContext'
 
 export default function Estoque() {
@@ -14,6 +15,7 @@ export default function Estoque() {
   const [produtoParaExcluir, setProdutoParaExcluir] = useState(null)
   const [excluindo, setExcluindo] = useState(false)
   const [produtoParaBaixa, setProdutoParaBaixa] = useState(null)
+  const [produtoParaEditar, setProdutoParaEditar] = useState(null)
 
   const carregar = useCallback(async (termo) => {
     try {
@@ -59,6 +61,15 @@ export default function Estoque() {
     await api.darBaixaEstoque(produtoParaBaixa.id, quantidade)
     setSucesso(`Baixa registrada: ${produtoParaBaixa.nome} agora tem ${(produtoParaBaixa.quantidade_atual - quantidade)} ${produtoParaBaixa.unidade} em estoque.`)
     setProdutoParaBaixa(null)
+    carregar(busca)
+  }
+
+  async function confirmarEdicao(dadosEditados) {
+    if (!produtoParaEditar) return
+    // Erro aqui e relancado para o modal mostrar a mensagem e continuar aberto.
+    await api.editarProduto(produtoParaEditar.id, dadosEditados)
+    setSucesso(`Produto "${dadosEditados.nome}" atualizado com sucesso.`)
+    setProdutoParaEditar(null)
     carregar(busca)
   }
 
@@ -117,9 +128,14 @@ export default function Estoque() {
                       Dar baixa
                     </button>
                     {autenticado && (
-                      <button className="botao-texto" style={{ marginLeft: 10 }} onClick={() => setProdutoParaExcluir(produto)}>
-                        Excluir
-                      </button>
+                      <>
+                        <button className="botao-texto" style={{ marginLeft: 10 }} onClick={() => setProdutoParaEditar(produto)}>
+                          Editar
+                        </button>
+                        <button className="botao-texto" style={{ marginLeft: 10 }} onClick={() => setProdutoParaExcluir(produto)}>
+                          Excluir
+                        </button>
+                      </>
                     )}
                   </td>
                 </tr>
@@ -144,6 +160,14 @@ export default function Estoque() {
           produto={produtoParaBaixa}
           onCancelar={() => setProdutoParaBaixa(null)}
           onConfirmar={confirmarBaixa}
+        />
+      )}
+
+      {produtoParaEditar && (
+        <ModalEditarProduto
+          produto={produtoParaEditar}
+          onCancelar={() => setProdutoParaEditar(null)}
+          onConfirmar={confirmarEdicao}
         />
       )}
     </div>

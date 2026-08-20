@@ -13,9 +13,13 @@ export default function AdminCompraDetalhe() {
   const [processando, setProcessando] = useState(false)
   const [acao, setAcao] = useState(null) // null | 'aprovar' | 'recusar'
   const [textoJustificativa, setTextoJustificativa] = useState('')
+  const [quantidadeAprovada, setQuantidadeAprovada] = useState('')
 
   function carregar() {
-    api.detalheCompra(id).then(setCompra).catch((e) => setErro(e.message))
+    api.detalheCompra(id).then((dados) => {
+      setCompra(dados)
+      setQuantidadeAprovada(String(dados.quantidade))
+    }).catch((e) => setErro(e.message))
   }
 
   useEffect(carregar, [id])
@@ -30,7 +34,18 @@ export default function AdminCompraDetalhe() {
     setErro('')
     try {
       if (acao === 'aprovar') {
-        await api.aprovarCompra(id, textoJustificativa.trim() || null)
+        const valor = Number(quantidadeAprovada)
+        if (!quantidadeAprovada || valor <= 0) {
+          setErro('Informe uma quantidade aprovada maior que zero.')
+          setProcessando(false)
+          return
+        }
+        if (valor > compra.quantidade) {
+          setErro('A quantidade aprovada não pode ser maior que a solicitada.')
+          setProcessando(false)
+          return
+        }
+        await api.aprovarCompra(id, textoJustificativa.trim() || null, valor)
       } else {
         await api.recusarCompra(id, textoJustificativa.trim() || null)
       }
@@ -72,9 +87,15 @@ export default function AdminCompraDetalhe() {
 
       <div className="cartao" style={{ marginBottom: 16 }}>
         <dl style={estilos.lista}>
-          <Linha rotulo="Quantidade" valor={`${compra.quantidade} ${compra.produto.unidade}`} />
+          <Linha rotulo="Quantidade solicitada" valor={`${compra.quantidade_solicitada} ${compra.produto.unidade}`} />
+          {compra.quantidade_aprovada !== null && (
+            <Linha rotulo="Quantidade aprovada" valor={`${compra.quantidade_aprovada} ${compra.produto.unidade}`} />
+          )}
+          {compra.quantidade_aprovada !== null && (
+            <Linha rotulo="Quantidade recebida" valor={`${compra.quantidade_recebida} de ${compra.quantidade_aprovada} ${compra.produto.unidade}`} />
+          )}
           <Linha rotulo="Preço unitário" valor={formatarMoeda(compra.preco_unitario)} />
-          <Linha rotulo="Valor total" valor={formatarMoeda(compra.valor_total)} destaque />
+          <Linha rotulo="Valor total (estimado na solicitação)" valor={formatarMoeda(compra.valor_total)} destaque />
           <Linha rotulo="Preço médio histórico" valor={compra.preco_medio_historico ? formatarMoeda(compra.preco_medio_historico) : 'Sem histórico ainda'} />
           <Linha rotulo="Fornecedor" valor={compra.fornecedor} />
           <Linha rotulo="Número da NF" valor={compra.numero_nf || '—'} />
@@ -84,7 +105,7 @@ export default function AdminCompraDetalhe() {
           {compra.observacao && <Linha rotulo="Observação" valor={compra.observacao} />}
           {compra.status !== 'pendente' && (
             <Linha
-              rotulo={compra.status === 'aprovada' ? 'Justificativa da aprovação' : 'Motivo da recusa'}
+              rotulo={compra.status === 'recusada' ? 'Motivo da recusa' : 'Justificativa da aprovação'}
               valor={compra.justificativa || 'Nenhuma justificativa foi informada.'}
             />
           )}
@@ -104,6 +125,20 @@ export default function AdminCompraDetalhe() {
             </div>
           ) : (
             <div>
+              {acao === 'aprovar' && (
+                <div className="campo">
+                  <label>Quantidade aprovada ({compra.produto.unidade})</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max={compra.quantidade}
+                    step="0.01"
+                    value={quantidadeAprovada}
+                    onChange={(e) => setQuantidadeAprovada(e.target.value)}
+                  />
+                  <span className="ajuda">Pode ser diferente da quantidade solicitada ({compra.quantidade_solicitada} {compra.produto.unidade}).</span>
+                </div>
+              )}
               <div className="campo">
                 <label>
                   {acao === 'aprovar' ? 'Justificativa da aprovação' : 'Motivo da recusa'}{' '}

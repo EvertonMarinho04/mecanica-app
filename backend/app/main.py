@@ -13,6 +13,8 @@ from .routers import (
     compras_router,
     dashboard_router,
     ferramentas_router,
+    abastecimento_router,
+    pneus_router,
 )
 
 load_dotenv()
@@ -38,6 +40,8 @@ app.include_router(responsaveis_router.router)
 app.include_router(compras_router.router)
 app.include_router(dashboard_router.router)
 app.include_router(ferramentas_router.router)
+app.include_router(abastecimento_router.router)
+app.include_router(pneus_router.router)
 
 
 def seed_dados_iniciais():

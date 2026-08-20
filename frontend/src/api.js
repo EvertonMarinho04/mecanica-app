@@ -51,24 +51,36 @@ export const api = {
   listarCategorias: () => request('/api/categorias'),
   listarProdutos: (busca) => request(`/api/produtos${busca ? `?busca=${encodeURIComponent(busca)}` : ''}`),
   criarProduto: (dados) => request('/api/produtos', { method: 'POST', body: dados }),
+  editarProduto: (id, dados) => request(`/api/produtos/${id}`, { method: 'PUT', body: dados, autenticado: true }),
   excluirProduto: (id) => request(`/api/produtos/${id}`, { method: 'DELETE', autenticado: true }),
   darBaixaEstoque: (produtoId, quantidade) =>
     request(`/api/produtos/${produtoId}/baixa`, { method: 'PATCH', body: { quantidade } }),
   listarResponsaveis: () => request('/api/responsaveis'),
   listarFerramentas: () => request('/api/ferramentas'),
   criarFerramenta: (dados) => request('/api/ferramentas', { method: 'POST', body: dados }),
-  atualizarFerramenta: (id, dados) => request(`/api/ferramentas/${id}`, { method: 'PUT', body: dados }),
-  excluirFerramenta: (id) => request(`/api/ferramentas/${id}`, { method: 'DELETE' }),
+  ferramentaEntrada: (id, quantidade) =>
+    request(`/api/ferramentas/${id}/entrada`, { method: 'PATCH', body: { quantidade } }),
+  ferramentaSaida: (id, quantidade) =>
+    request(`/api/ferramentas/${id}/saida`, { method: 'PATCH', body: { quantidade }, autenticado: true }),
+  excluirFerramenta: (id) => request(`/api/ferramentas/${id}`, { method: 'DELETE', autenticado: true }),
+  historicoFerramenta: (id) => request(`/api/ferramentas/${id}/movimentacoes`, { autenticado: true }),
   registrarCompra: (dados) => request('/api/compras', { method: 'POST', body: dados }),
   minhasSolicitacoes: (nome) =>
     request(`/api/compras/minhas?responsavel_nome=${encodeURIComponent(nome)}`),
+  registrarRecebimento: (id, quantidade) =>
+    request(`/api/compras/${id}/receber`, { method: 'POST', body: { quantidade } }),
+
+  // ---- abastecimento (publico) ----
+  registrarAbastecimento: (dados) => request('/api/abastecimentos', { method: 'POST', body: dados }),
+  historicoAbastecimentos: (placa) =>
+    request(`/api/abastecimentos${placa ? `?placa=${encodeURIComponent(placa)}` : ''}`),
 
   // ---- admin ----
   login: (senha) => request('/api/admin/login', { method: 'POST', body: { senha } }),
   pendentes: () => request('/api/compras/pendentes', { autenticado: true }),
   detalheCompra: (id) => request(`/api/compras/${id}`, { autenticado: true }),
-  aprovarCompra: (id, justificativa) =>
-    request(`/api/compras/${id}/aprovar`, { method: 'POST', body: { justificativa }, autenticado: true }),
+  aprovarCompra: (id, justificativa, quantidade_aprovada) =>
+    request(`/api/compras/${id}/aprovar`, { method: 'POST', body: { justificativa, quantidade_aprovada }, autenticado: true }),
   recusarCompra: (id, motivo) =>
     request(`/api/compras/${id}/recusar`, { method: 'POST', body: { motivo }, autenticado: true }),
   historicoCompras: (filtros = {}) => {
@@ -85,4 +97,15 @@ export const api = {
   gastosPorCategoria: () => request('/api/dashboard/gastos-por-categoria', { autenticado: true }),
   maioresAumentos: () => request('/api/dashboard/maiores-aumentos', { autenticado: true }),
   maisComprados: () => request('/api/dashboard/mais-comprados', { autenticado: true }),
+  dashboardFrota: (periodo) =>
+    request(`/api/abastecimentos/dashboard${periodo ? `?periodo=${periodo}` : ''}`, { autenticado: true }),
+
+  // ---- pneus (admin) ----
+  listarPneus: () => request('/api/pneus', { autenticado: true }),
+  cadastrarPneu: (dados) => request('/api/pneus', { method: 'POST', body: dados, autenticado: true }),
+  detalhePneu: (id) => request(`/api/pneus/${id}`, { autenticado: true }),
+  registrarRodizio: (id, dados) =>
+    request(`/api/pneus/${id}/rodizio`, { method: 'POST', body: dados, autenticado: true }),
+  atualizarStatusPneu: (id, status) =>
+    request(`/api/pneus/${id}/status`, { method: 'PATCH', body: { status }, autenticado: true }),
 }

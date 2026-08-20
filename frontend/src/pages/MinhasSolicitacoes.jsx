@@ -11,6 +11,10 @@ export default function MinhasSolicitacoes() {
   const [solicitacoes, setSolicitacoes] = useState(null)
   const [erro, setErro] = useState('')
   const [carregando, setCarregando] = useState(false)
+  const [recebendoId, setRecebendoId] = useState(null)
+  const [quantidadeRecebimento, setQuantidadeRecebimento] = useState('')
+  const [erroRecebimento, setErroRecebimento] = useState('')
+  const [enviandoRecebimento, setEnviandoRecebimento] = useState(false)
 
   function buscar(nomeParaBuscar) {
     const alvo = (nomeParaBuscar ?? nome).trim()
@@ -40,6 +44,35 @@ export default function MinhasSolicitacoes() {
   function aoEnviar(e) {
     e.preventDefault()
     buscar()
+  }
+
+  function abrirRecebimento(solicitacao) {
+    setRecebendoId(solicitacao.id)
+    setQuantidadeRecebimento(String(solicitacao.quantidade_restante))
+    setErroRecebimento('')
+  }
+
+  async function confirmarRecebimento(solicitacao) {
+    const valor = Number(quantidadeRecebimento)
+    if (!quantidadeRecebimento || valor <= 0) {
+      setErroRecebimento('Informe uma quantidade maior que zero.')
+      return
+    }
+    if (valor > solicitacao.quantidade_restante) {
+      setErroRecebimento(`Você não pode receber mais do que o pendente (${solicitacao.quantidade_restante} ${solicitacao.produto.unidade}).`)
+      return
+    }
+    setErroRecebimento('')
+    setEnviandoRecebimento(true)
+    try {
+      await api.registrarRecebimento(solicitacao.id, valor)
+      setRecebendoId(null)
+      buscar(nomeConsultado)
+    } catch (e) {
+      setErroRecebimento(e.message)
+    } finally {
+      setEnviandoRecebimento(false)
+    }
   }
 
   return (
@@ -84,7 +117,7 @@ export default function MinhasSolicitacoes() {
                     <div>
                       <div style={{ fontWeight: 600 }}>{s.produto.nome}</div>
                       <div className="subtitulo" style={{ fontSize: '0.85rem' }}>
-                        Quantidade: {s.quantidade} {s.produto.unidade} · {formatarData(s.data_registro)}
+                        Solicitado: {s.quantidade_solicitada} {s.produto.unidade} · {formatarData(s.data_registro)}
                       </div>
                     </div>
                     <BadgeStatus status={s.status} />
@@ -96,12 +129,56 @@ export default function MinhasSolicitacoes() {
                     </p>
                   )}
 
+                  {s.quantidade_aprovada !== null && s.status !== 'recusada' && (
+                    <div style={{ display: 'flex', gap: 16, marginTop: 8, fontSize: '0.88rem' }}>
+                      <span>Aprovado: <strong className="dado">{s.quantidade_aprovada} {s.produto.unidade}</strong></span>
+                      <span>Recebido: <strong className="dado">{s.quantidade_recebida} {s.produto.unidade}</strong></span>
+                      {s.quantidade_restante > 0 && (
+                        <span>Restante: <strong className="dado">{s.quantidade_restante} {s.produto.unidade}</strong></span>
+                      )}
+                    </div>
+                  )}
+
                   {s.status !== 'pendente' && (
                     <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--cor-borda)' }}>
                       <div className="subtitulo" style={{ fontSize: '0.8rem', marginBottom: 2 }}>Justificativa</div>
                       <p style={{ margin: 0, fontSize: '0.9rem' }}>
                         {s.justificativa || 'Nenhuma justificativa foi informada.'}
                       </p>
+                    </div>
+                  )}
+
+                  {(s.status === 'aprovada' || s.status === 'parcialmente_recebida') && s.quantidade_restante > 0 && (
+                    <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--cor-borda)' }}>
+                      {recebendoId !== s.id ? (
+                        <button className="botao botao-primario" style={{ width: '100%' }} onClick={() => abrirRecebimento(s)}>
+                          📥 Registrar recebimento
+                        </button>
+                      ) : (
+                        <div>
+                          {erroRecebimento && <div className="mensagem-erro">{erroRecebimento}</div>}
+                          <div className="campo">
+                            <label>Quantidade recebida agora ({s.produto.unidade})</label>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={quantidadeRecebimento}
+                              onChange={(e) => setQuantidadeRecebimento(e.target.value)}
+                              autoFocus
+                            />
+                            <span className="ajuda">Pendente de recebimento: {s.quantidade_restante} {s.produto.unidade}</span>
+                          </div>
+                          <div style={{ display: 'flex', gap: 10 }}>
+                            <button className="botao botao-secundario" style={{ flex: 1 }} onClick={() => setRecebendoId(null)} disabled={enviandoRecebimento}>
+                              Cancelar
+                            </button>
+                            <button className="botao botao-primario" style={{ flex: 1 }} onClick={() => confirmarRecebimento(s)} disabled={enviandoRecebimento}>
+                              {enviandoRecebimento ? 'Salvando...' : 'Confirmar'}
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

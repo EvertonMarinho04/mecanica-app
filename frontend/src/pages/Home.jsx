@@ -6,6 +6,7 @@ const OPCOES = [
   { to: '/cadastrar-peca', icone: '➕', titulo: 'Cadastrar peça', descricao: 'Adicione um novo produto ao sistema.' },
   { to: '/ferramentas', icone: '🔧', titulo: 'Ferramentas', descricao: 'Consulte e atualize as ferramentas da oficina.' },
   { to: '/minhas-solicitacoes', icone: '📋', titulo: 'Minhas solicitações', descricao: 'Veja o status das compras que você pediu.' },
+  { to: '/abastecimento', icone: '⛽', titulo: 'Abastecimento', descricao: 'Registre o abastecimento de um caminhão pela placa.' },
 ]
 
 export default function Home() {

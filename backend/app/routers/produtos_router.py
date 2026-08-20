@@ -85,6 +85,42 @@ def excluir_produto(produto_id: int, db: Session = Depends(get_db)):
     db.commit()
 
 
+# ---------- Editar produto (somente administrador) ----------
+@router.put("/produtos/{produto_id}", response_model=schemas.ProdutoOut, dependencies=[Depends(auth.exigir_admin)])
+def editar_produto(produto_id: int, dados: schemas.ProdutoUpdate, db: Session = Depends(get_db)):
+    produto = db.query(models.Produto).get(produto_id)
+    if not produto:
+        raise HTTPException(status_code=404, detail="Produto nao encontrado.")
+
+    nome_categoria = dados.categoria_nome.strip()
+    if not nome_categoria:
+        raise HTTPException(status_code=400, detail="Categoria e obrigatoria.")
+
+    categoria = db.query(models.Categoria).filter(models.Categoria.nome.ilike(nome_categoria)).first()
+    if categoria is None:
+        categoria = models.Categoria(nome=nome_categoria)
+        db.add(categoria)
+        db.commit()
+        db.refresh(categoria)
+
+    nome_duplicado = (
+        db.query(models.Produto)
+        .filter(models.Produto.nome.ilike(dados.nome.strip()), models.Produto.id != produto_id)
+        .first()
+    )
+    if nome_duplicado:
+        raise HTTPException(status_code=400, detail="Ja existe outro produto com esse nome.")
+
+    produto.nome = dados.nome.strip()
+    produto.categoria_id = categoria.id
+    produto.unidade = dados.unidade.strip()
+    produto.ncm_sh = (dados.ncm_sh or "").strip() or None
+    produto.estoque_minimo = dados.estoque_minimo
+    db.commit()
+    db.refresh(produto)
+    return produto_para_out(produto)
+
+
 # ---------- Dar baixa no estoque (funcionario, sem login) ----------
 @router.patch("/produtos/{produto_id}/baixa", response_model=schemas.ProdutoOut)
 def dar_baixa_estoque(produto_id: int, dados: schemas.BaixaEstoqueRequest, db: Session = Depends(get_db)):

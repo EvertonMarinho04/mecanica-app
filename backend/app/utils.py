@@ -26,6 +26,26 @@ def calcular_variacao_percentual(preco_atual: float, preco_referencia: Optional[
     return round(((preco_atual - preco_referencia) / preco_referencia) * 100, 1)
 
 
+def calcular_status_exibicao(compra: "models.Compra") -> str:
+    """O banco so guarda pendente/aprovada/recusada (ver models.StatusCompra).
+    'Parcialmente recebida' e 'recebida' sao calculados aqui, comparando o
+    que foi recebido com o que foi aprovado - assim nao precisamos alterar
+    o tipo enum nativo do banco em producao."""
+    if compra.status == models.StatusCompra.RECUSADA:
+        return models.StatusCompra.RECUSADA.value
+    if compra.status == models.StatusCompra.PENDENTE:
+        return models.StatusCompra.PENDENTE.value
+
+    # APROVADA
+    aprovada = compra.quantidade_aprovada or 0
+    recebida = compra.quantidade_recebida or 0
+    if recebida <= 0:
+        return models.StatusCompra.APROVADA.value
+    if recebida >= aprovada:
+        return models.StatusCompra.RECEBIDA.value
+    return models.StatusCompra.PARCIALMENTE_RECEBIDA.value
+
+
 def produto_para_out(produto: models.Produto) -> dict:
     return {
         "id": produto.id,

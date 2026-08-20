@@ -5,6 +5,8 @@ const ABAS = [
   { to: '/admin', rotulo: 'Dashboard', fim: true },
   { to: '/admin/pendentes', rotulo: 'Compras pendentes' },
   { to: '/admin/historico', rotulo: 'Histórico' },
+  { to: '/admin/frota', rotulo: 'Frota' },
+  { to: '/admin/pneus', rotulo: 'Pneus' },
 ]
 
 export default function AdminLayout() {

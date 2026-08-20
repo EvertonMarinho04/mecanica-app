@@ -8,6 +8,7 @@ import CadastrarPeca from './pages/CadastrarPeca'
 import RegistrarCompra from './pages/RegistrarCompra'
 import Ferramentas from './pages/Ferramentas'
 import MinhasSolicitacoes from './pages/MinhasSolicitacoes'
+import Abastecimento from './pages/Abastecimento'
 
 import AdminLogin from './pages/AdminLogin'
 import AdminLayout from './pages/AdminLayout'
@@ -16,6 +17,9 @@ import AdminPendentes from './pages/AdminPendentes'
 import AdminCompraDetalhe from './pages/AdminCompraDetalhe'
 import AdminHistorico from './pages/AdminHistorico'
 import AdminComprasMes from './pages/AdminComprasMes'
+import AdminFrota from './pages/AdminFrota'
+import AdminPneus from './pages/AdminPneus'
+import AdminPneuDetalhe from './pages/AdminPneuDetalhe'
 
 export default function App() {
   return (
@@ -29,6 +33,7 @@ export default function App() {
             <Route path="/registrar-compra" element={<RegistrarCompra />} />
             <Route path="/ferramentas" element={<Ferramentas />} />
             <Route path="/minhas-solicitacoes" element={<MinhasSolicitacoes />} />
+            <Route path="/abastecimento" element={<Abastecimento />} />
           </Route>
 
           <Route path="/admin/login" element={<AdminLogin />} />
@@ -39,6 +44,9 @@ export default function App() {
             <Route path="compras/:id" element={<AdminCompraDetalhe />} />
             <Route path="historico" element={<AdminHistorico />} />
             <Route path="compras-mes" element={<AdminComprasMes />} />
+            <Route path="frota" element={<AdminFrota />} />
+            <Route path="pneus" element={<AdminPneus />} />
+            <Route path="pneus/:id" element={<AdminPneuDetalhe />} />
           </Route>
         </Routes>
       </BrowserRouter>
